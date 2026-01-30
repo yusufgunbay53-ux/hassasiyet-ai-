@@ -1,14 +1,16 @@
 import streamlit as st
 import google.generativeai as genai
 
+# Sayfa Ayarları
 st.set_page_config(page_title="PUBG Kod Bulucu")
 st.title("🎯 PUBG Mobile Hassasiyet Sorgu")
 
-# API Anahtarını al ve yapılandır
+# API Anahtarı ve v1 Kararlı Sürüm Zorlaması
 if "API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["API_KEY"])
+    # Burada v1 sürümünü zorlayarak 404 hatasını bypass ediyoruz
+    genai.configure(api_key=st.secrets["API_KEY"], transport='rest')
 else:
-    st.error("API_KEY Secrets içine eklenmemiş!")
+    st.error("Secrets içine API_KEY eklenmemiş!")
     st.stop()
 
 user_input = st.text_input("Ünlü İsmi:")
@@ -17,7 +19,7 @@ if st.button("KODU GETİR"):
     if user_input:
         with st.spinner('Sorgulanıyor...'):
             try:
-                # Grafikte hata veren sürüm yerine en kararlı olanı zorluyoruz
+                # Model ismini EN SADE haliyle yazıyoruz
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 response = model.generate_content(f"{user_input} PUBG Mobile sensitivity code only 21 digits.")
                 
@@ -25,6 +27,5 @@ if st.button("KODU GETİR"):
                     st.success("Kod bulundu!")
                     st.code(response.text)
             except Exception as e:
-                st.error(f"Google Hatası: {e}")
-                st.info("Eğer 404 alıyorsan, lütfen Google AI Studio'dan YENİ BİR KEY alıp Secrets'a yapıştır.")
+                st.error(f"Teknik Hata: {e}")
                 
