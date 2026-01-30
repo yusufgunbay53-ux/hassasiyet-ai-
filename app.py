@@ -15,7 +15,7 @@ except Exception:
     st.error("Hata: Secrets kısmında API_KEY bulunamadı!")
     st.stop()
 
-# Cooldown (3 Dakika Bekleme)
+# Cooldown
 if 'last_request_time' not in st.session_state:
     st.session_state.last_request_time = 0
 
@@ -33,10 +33,11 @@ if st.button("KODU GETİR"):
         try:
             genai.configure(api_key=API_KEY)
             
-            # HATA BURADAYDI: Başına 'models/' ekledik ve flash modelini seçtik
-            model = genai.GenerativeModel('models/gemini-1.5-flash')
+            # EN GARANTİ MODEL: Başında models/ olmadan gemini-pro
+            # Eğer yine hata verirse bu kütüphane çok eskidir, ona göre güncelleriz.
+            model = genai.GenerativeModel('gemini-pro')
             
-            sistem_komutu = f"PUBG Mobile uzmanı olarak {user_input} isimli oyuncunun hassasiyet kodunu sadece 21 haneli rakam olarak ver. Başka hiçbir şey yazma."
+            sistem_komutu = f"PUBG Mobile uzmanı olarak {user_input} isimli oyuncunun hassasiyet kodunu sadece 21 haneli rakam olarak ver."
             
             with st.spinner('Sorgulanıyor...'):
                 response = model.generate_content(sistem_komutu)
@@ -44,10 +45,7 @@ if st.button("KODU GETİR"):
                 st.success(f"{user_input} için kod:")
                 st.code(response.text)
         except Exception as e:
-            # Hata devam ederse detayını görelim
             st.error(f"Hata detayı: {e}")
     else:
         st.warning("Lütfen bir isim girin.")
-
-st.markdown("---")
-st.caption("Ücretsiz API sürümü kullanıldığı için lütfen sabırlı olun.")
+        
