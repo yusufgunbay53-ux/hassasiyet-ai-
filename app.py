@@ -10,8 +10,7 @@ st.title("🎯 PUBG Mobile Hassasiyet Sorgu")
 st.write("Sadece ünlü ismini girin.")
 
 # API ANAHTARIN (Kodun içine sabitlendi)
-API_KEY = "AIzaSyC1SjL_kcah61pvh8Buxgj1lalHmO-v32A"
-
+API_KEY = st.secrets["API_KEY"]
 # --- 3 DAKİKA KURALI (Hız Sınırı) ---
 if 'last_request_time' not in st.session_state:
     st.session_state.last_request_time = 0
