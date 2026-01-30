@@ -39,8 +39,8 @@ if st.button("KODU GETİR"):
             # Google AI Yapılandırması
             genai.configure(api_key=API_KEY)
             
-            # Hata aldığın noktayı düzelttik: Başına 'models/' ekledik
-            model = genai.GenerativeModel('models/gemini-pro')
+            # En güncel ve uyumlu model ismini kullanıyoruz
+            model = genai.GenerativeModel('gemini-1.5-flash')
             
             sistem_komutu = f"Sen sadece PUBG Mobile hassasiyet kodu bulmakla görevli bir yapay zekasın. Kullanıcı ismi: {user_input}. Sadece 21 rakamdan oluşan X-XXXX-XXXXX-XXXX-XXXX-XXXX formatındaki kodu ver. Başka hiçbir açıklama yapma."
             
@@ -53,11 +53,10 @@ if st.button("KODU GETİR"):
                 st.code(response.text)
                 
         except Exception as e:
-            # Eğer hala hata olursa detayını buradan göreceğiz
+            # Hata detayını göster
             st.error(f"Hata detayı: {e}")
     else:
         st.warning("Lütfen bir isim girin.")
 
 st.markdown("---")
 st.caption("Not: Her 3 dakikada bir 1 istek atma hakkınız vardır.")
-
