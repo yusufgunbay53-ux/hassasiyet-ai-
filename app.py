@@ -8,7 +8,7 @@ st.set_page_config(page_title="PUBG Kod Bulucu", page_icon="🎯")
 st.title("🎯 PUBG Mobile Hassasiyet Sorgu")
 st.write("Sadece ünlü ismini girin.")
 
-# API Anahtarı
+# Secrets kontrolü
 try:
     API_KEY = st.secrets["API_KEY"]
 except Exception:
@@ -33,19 +33,21 @@ if st.button("KODU GETİR"):
         try:
             genai.configure(api_key=API_KEY)
             
-            # EN GARANTİ MODEL: Başında models/ olmadan gemini-pro
-            # Eğer yine hata verirse bu kütüphane çok eskidir, ona göre güncelleriz.
-            model = genai.GenerativeModel('gemini-pro')
+            # Hata mesajındaki 'models/' zorunluluğunu bu şekilde çözüyoruz
+            model = genai.GenerativeModel('models/gemini-1.5-flash')
             
-            sistem_komutu = f"PUBG Mobile uzmanı olarak {user_input} isimli oyuncunun hassasiyet kodunu sadece 21 haneli rakam olarak ver."
+            sistem_komutu = f"PUBG Mobile hassasiyet kodu uzmanısın. {user_input} için sadece 21 haneli rakam kodu ver."
             
             with st.spinner('Sorgulanıyor...'):
+                # Güvenlik önlemi olarak basit bir içerik üretimi deniyoruz
                 response = model.generate_content(sistem_komutu)
                 st.session_state.last_request_time = current_time
-                st.success(f"{user_input} için kod:")
+                st.success(f"{user_input} için kod bulundu:")
                 st.code(response.text)
         except Exception as e:
             st.error(f"Hata detayı: {e}")
     else:
         st.warning("Lütfen bir isim girin.")
-        
+
+st.markdown("---")
+st.caption("Not: Eğer hala 404 hatası alıyorsanız API anahtarınız bu modeli desteklemiyor olabilir.")
