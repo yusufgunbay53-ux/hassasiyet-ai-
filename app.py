@@ -1,41 +1,46 @@
 import streamlit as st
-import google.generativeai as genai
+import requests
+import json
 
-# Sayfa Ayarları
 st.set_page_config(page_title="PUBG Kod Bulucu")
 st.title("🎯 PUBG Mobile Hassasiyet Sorgu")
 
-# API Yapılandırması
-if "API_KEY" in st.secrets:
-    # transport='rest' kalsın, bu en stabil yoldur
-    genai.configure(api_key=st.secrets["API_KEY"], transport='rest')
-else:
-    st.error("Secrets içine API_KEY eklenmemiş!")
-    st.stop()
+# API Anahtarını al
+api_key = st.secrets.get("API_KEY")
 
-user_input = st.text_input("Ünlü İsmi:")
+user_input = st.text_input("Ünlü İsmi:", placeholder="Örn: Ersin Yekin")
 
 if st.button("KODU GETİR"):
-    if user_input:
-        with st.spinner('Sorgulanıyor...'):
+    if not api_key:
+        st.error("Secrets kısmında API_KEY bulunamadı!")
+    elif user_input:
+        with st.spinner('Doğrudan Google sunucularına bağlanılıyor...'):
+            # Adresi biz elle yazıyoruz (v1 sürümü), yanlış kapıya gitme şansı yok!
+            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+            
+            payload = {
+                "contents": [{
+                    "parts": [{"text": f"PUBG Mobile {user_input} hassasiyet kodu sadece 21 haneli rakam ver."}]
+                }]
+            }
+            headers = {'Content-Type': 'application/json'}
+            
             try:
-                # DİKKAT: Model isminin önüne 'models/' ekledik. 
-                # 404 hatasını bu şekilde bypass ediyoruz.
-                model = genai.GenerativeModel('models/gemini-1.5-flash')
+                response = requests.post(url, headers=headers, data=json.dumps(payload))
+                result = response.json()
                 
-                prompt = f"{user_input} PUBG Mobile sensitivity code only 21 digits."
-                response = model.generate_content(prompt)
-                
-                if response.text:
-                    st.success("Kod bulundu!")
-                    st.code(response.text)
+                if "candidates" in result:
+                    kod = result["candidates"][0]["content"]["parts"][0]["text"]
+                    st.success(f"{user_input} için kod bulundu!")
+                    st.code(kod)
+                else:
+                    # Hata mesajını detaylı görelim
+                    error_msg = result.get('error', {}).get('message', 'Bilinmeyen hata')
+                    st.error(f"Google Yanıtı: {error_msg}")
+                    if "404" in str(result):
+                        st.info("Eğer hala 404 alıyorsan, Google AI Studio'dan 'Gemini 1.5 Flash' modelinin aktif olup olmadığını kontrol et.")
             except Exception as e:
-                # Eğer flash yine hata verirse, en eski/kararlı olan 'gemini-pro'yu dene
-                try:
-                    model = genai.GenerativeModel('models/gemini-pro')
-                    response = model.generate_content(prompt)
-                    st.success("Kod bulundu (Pro sürüm)!")
-                    st.code(response.text)
-                except Exception as e2:
-                    st.error(f"Google hala kapıyı açmıyor. Hata: {e2}")
-                    
+                st.error(f"Bağlantı hatası: {e}")
+    else:
+        st.warning("Lütfen bir isim girin.")
+        
