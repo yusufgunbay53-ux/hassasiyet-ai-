@@ -8,19 +8,23 @@ st.set_page_config(page_title="PUBG Kod Bulucu", page_icon="🎯")
 st.title("🎯 PUBG Mobile Hassasiyet Sorgu")
 st.write("Sadece ünlü ismini girin.")
 
-# Secrets kısmından API anahtarını alıyoruz
+# Secrets kısmından API anahtarını çekiyoruz
 try:
-    API_KEY = st.secrets["API_KEY"]
-except Exception:
-    st.error("Hata: Secrets kısmında API_KEY bulunamadı!")
+    if "API_KEY" in st.secrets:
+        API_KEY = st.secrets["API_KEY"]
+    else:
+        st.error("Hata: Secrets kısmında 'API_KEY' bulunamadı!")
+        st.stop()
+except Exception as e:
+    st.error(f"Secrets hatası: {e}")
     st.stop()
 
-# İstek sınırı için zaman kontrolü
+# Zaman kontrolü (Cooldown)
 if 'last_request_time' not in st.session_state:
     st.session_state.last_request_time = 0
 
 current_time = time.time()
-cooldown = 180 # 3 dakika (180 saniye)
+cooldown = 180 # 3 dakika
 
 user_input = st.text_input("Ünlü İsmi:", placeholder="Örn: Ersin Yekin")
 
@@ -35,24 +39,25 @@ if st.button("KODU GETİR"):
             # Google AI Yapılandırması
             genai.configure(api_key=API_KEY)
             
-            # Hata aldığın 1.5-flash yerine en kararlı gemini-pro modelini kullanıyoruz
-            model = genai.GenerativeModel('gemini-pro')
+            # Hata aldığın noktayı düzelttik: Başına 'models/' ekledik
+            model = genai.GenerativeModel('models/gemini-pro')
             
-            sistem_komutu = f"Sen sadece PUBG Mobile hassasiyet kodu bulmakla görevli bir yapay zekasın. Kullanıcı ismi: {user_input}. Sadece 21 rakamdan oluşan X-XXXX-XXXXX-XXXX-XXXX-XXXX formatındaki kodu ver. Başka bir şey yazma."
+            sistem_komutu = f"Sen sadece PUBG Mobile hassasiyet kodu bulmakla görevli bir yapay zekasın. Kullanıcı ismi: {user_input}. Sadece 21 rakamdan oluşan X-XXXX-XXXXX-XXXX-XXXX-XXXX formatındaki kodu ver. Başka hiçbir açıklama yapma."
             
             with st.spinner('Sorgulanıyor...'):
                 response = model.generate_content(sistem_komutu)
                 st.session_state.last_request_time = current_time
                 
-                # Sonucu ekrana yazdır
+                # Sonucu göster
                 st.success(f"{user_input} için bulunan kod:")
                 st.code(response.text)
                 
         except Exception as e:
-            # Hata olursa ne olduğunu ekranda göster
+            # Eğer hala hata olursa detayını buradan göreceğiz
             st.error(f"Hata detayı: {e}")
     else:
         st.warning("Lütfen bir isim girin.")
 
 st.markdown("---")
 st.caption("Not: Her 3 dakikada bir 1 istek atma hakkınız vardır.")
+
