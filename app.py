@@ -1,7 +1,3 @@
-import os
-# Kütüphane uyumsuzluğunu gidermek için zorunlu güncelleme
-os.system("pip install --upgrade google-generativeai")
-
 import streamlit as st
 import google.generativeai as genai
 import time
@@ -15,6 +11,7 @@ st.write("Sadece ünlü ismini girin.")
 # API Anahtarı
 try:
     API_KEY = st.secrets["API_KEY"]
+    genai.configure(api_key=API_KEY)
 except Exception:
     st.error("Hata: Secrets kısmında API_KEY bulunamadı!")
     st.stop()
@@ -35,20 +32,25 @@ if st.button("KODU GETİR"):
         st.warning(f"Lütfen tekrar istek atmak için {kalan_sure + 1} dakika bekleyin.")
     elif user_input:
         try:
-            genai.configure(api_key=API_KEY)
+            # En geniş kapsamlı model ismi
+            model = genai.GenerativeModel('gemini-1.5-flash-latest')
             
-            # En eski ve en uyumlu model ismi formatı
-            model = genai.GenerativeModel('gemini-pro')
-            
-            sistem_komutu = f"PUBG Mobile uzmanı olarak {user_input} isimli oyuncunun hassasiyet kodunu sadece 21 haneli rakam olarak ver. Örn: 1111-2222-3333-4444-555"
+            sistem_komutu = f"PUBG Mobile hassasiyet kodu uzmanısın. {user_input} için sadece 21 haneli rakam kodu ver (Örn: 1234-5678-9012-3456-789). Başka yazı yazma."
             
             with st.spinner('Sorgulanıyor...'):
                 response = model.generate_content(sistem_komutu)
                 st.session_state.last_request_time = current_time
-                st.success(f"{user_input} için kod:")
+                st.success(f"{user_input} için kod bulundu:")
                 st.code(response.text)
         except Exception as e:
-            st.error(f"Hata detayı: {e}")
+            # Hata devam ederse alternatif modele geçiş yapıyoruz
+            try:
+                model = genai.GenerativeModel('gemini-pro')
+                response = model.generate_content(sistem_komutu)
+                st.success(f"{user_input} için kod bulundu (Alt Mod):")
+                st.code(response.text)
+            except Exception as e2:
+                st.error(f"Sistem şu an meşgul, lütfen 3 dakika sonra tekrar deneyin. (Hata: {e2})")
     else:
         st.warning("Lütfen bir isim girin.")
         
